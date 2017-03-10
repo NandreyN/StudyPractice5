@@ -19,7 +19,7 @@ BOOL InitInstance(HINSTANCE hinstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 void DeleteCircle(HDC& hdc, Circle& circle);
 void DrawCircle(HDC& hdc, Circle& circle);
-bool HandleTimer(HDC& hdc, int x, int y, Circle& circle, bool isDirect);
+bool HandleTimer(HWND& hwnd ,HDC& hdc, int x, int y, Circle& circle, bool isDirect);
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prevHinstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -79,7 +79,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 	{
 	case WM_CREATE:
 		hdc = GetDC(hwnd);
-		SetTimer(hwnd, BALL_TIMER, 30, (TIMERPROC)NULL);
+		SetTimer(hwnd, BALL_TIMER, 20, (TIMERPROC)NULL);
 		circle.center.x = circle.center.y = 0;
 		circle.R = 5;
 		isDirect = true;
@@ -92,7 +92,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		switch (wparam)
 		{
 		case BALL_TIMER:
-			isDirect = HandleTimer(hdc, x - 5, y - 5, circle, isDirect);
+			isDirect = HandleTimer(hwnd, hdc, x, y, circle, isDirect);
+			
 			break;
 		default:return FALSE;
 		}
@@ -124,18 +125,24 @@ void DrawCircle(HDC& hdc, Circle& circle)
 	Ellipse(hdc, x - r, y - r, x + r, y + r);
 }
 
-bool HandleTimer(HDC& hdc, int x, int y, Circle& circle, bool isDirect)
+bool HandleTimer(HWND& hwnd, HDC& hdc, int x, int y, Circle& circle, bool isDirect)
 {
 	DeleteCircle(hdc, circle);
-	int perX = x / 10, perY = y / 2; // цена деления в пикселях
+	/*int x0; x0 = circle.center.x;
+	int y0; y0 = circle.center.y;
+	int r; r = circle.R;
+	HRGN rgn; rgn = CreateEllipticRgn(x0 - r - 1, y0 - r - 1 , x0 + r + 2, y0 + r + 2);
+	InvalidateRgn(hwnd, rgn, true);*/
 
-	circle.center.x += (isDirect) ? 5 : -5;
+	int perX = x / 6.28, perY = y / 2; // цена деления в пикселях
+
+	circle.center.x += (isDirect) ? 10 : -10;
 
 	double val = sin((double)circle.center.x / perX)  * perY;
 	circle.center.y = y / 2 + val;
 	DrawCircle(hdc, circle);
-	
-	if ((x - 2 <= circle.center.x && circle.center.x <= x + 3) ||( circle.center.x >= -3 && circle.center.x <= 2))
+
+	if ((x - 5 <= circle.center.x && circle.center.x <= x + 5) || (circle.center.x >= -5 && circle.center.x <= 5))
 		return !isDirect;
 	return isDirect;
 }
