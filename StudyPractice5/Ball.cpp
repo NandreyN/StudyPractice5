@@ -81,7 +81,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		hdc = GetDC(hwnd);
 		SetTimer(hwnd, BALL_TIMER, 20, (TIMERPROC)NULL);
 		circle.center.x = circle.center.y = 0;
-		circle.R = 5;
+		circle.R = 10;
 		isDirect = true;
 		break;
 	case WM_SIZE:
@@ -92,7 +92,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		switch (wparam)
 		{
 		case BALL_TIMER:
-			isDirect = HandleTimer(hwnd, hdc, x, y, circle, isDirect, 5);
+			isDirect = HandleTimer(hwnd, hdc, x, y, circle, isDirect, 7);
 			ValidateRect(hwnd, NULL);
 			break;
 		default:return FALSE;
@@ -128,14 +128,8 @@ void DrawCircle(HDC& hdc, Circle& circle)
 bool HandleTimer(HWND& hwnd, HDC& hdc, int x, int y, Circle& circle, bool isDirect, int speed)
 {
 	DeleteCircle(hdc, circle);
-	/*int x0; x0 = circle.center.x;
-	int y0; y0 = circle.center.y;
-	int r; r = circle.R;
-	HRGN rgn; rgn = CreateEllipticRgn(x0 - r - 1, y0 - r - 1 , x0 + r + 2, y0 + r + 2);
-	InvalidateRgn(hwnd, rgn, true);*/
 
 	int perX = x / 6.28, perY = y / 2; // цена деления в пикселях
-
 	circle.center.x += (isDirect) ? speed : -speed;
 
 	double val = sin((double)circle.center.x / perX)  * perY;

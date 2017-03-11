@@ -179,6 +179,8 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x0, int x, int y)
 		old = (HBRUSH)SelectObject(hdc, brush);
 
 		Rectangle(hdc, column.left, column.top, column.right, column.bottom);
+		MoveToEx(hdc, column.left, column.top, NULL);
+		LineTo(hdc, 0.05*x, column.top);
 		SelectObject(hdc, brush);
 		DeleteObject(brush);
 
@@ -190,15 +192,21 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x0, int x, int y)
 
 void DrawScale(HDC& hdc, int x, int y)
 {
-	HPEN pen, old; pen = CreatePen(PS_SOLID, 2, BLACK_PEN);
+	HPEN pen, old; pen = CreatePen(PS_DOT, 3, BLACK_PEN);
 	old = (HPEN)SelectObject(hdc, pen);
 
 	MoveToEx(hdc, x, 0, NULL);
 	LineTo(hdc, x, y);
 
-	int yScale = y / 10;
-	for (int i = y; i >= 0; i -= yScale)
+	double yScale = (double)y / 10;
+	for (double i = y, j = 1; i >= 0; i -= yScale, j++)
 	{
+		RECT r;
+		r.left = 0; r.top = i - yScale;
+		r.right = x; r.bottom = y;
+		string text = to_string((int)j * 10);
+
+		DrawText(hdc, text.data(), text.size(), &r, NULL);
 		MoveToEx(hdc, x, i, NULL);
 		LineTo(hdc, x - x*0.1, i);
 	}
