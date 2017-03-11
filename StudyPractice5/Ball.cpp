@@ -14,8 +14,8 @@ struct Circle
 	POINT center;
 };
 
-BOOL InitApplication(HINSTANCE hinstance);
-BOOL InitInstance(HINSTANCE hinstance, int nCmdShow);
+BOOL InitWnd1(HINSTANCE hinstance);
+BOOL InitInstance1(HINSTANCE hinstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 void DeleteCircle(HDC& hdc, Circle& circle);
 void DrawCircle(HDC& hdc, Circle& circle);
@@ -25,13 +25,13 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prevHinstance, LPSTR lpCmdLine
 {
 	MSG msg;
 
-	if (!InitApplication(hinstance))
+	if (!InitWnd1(hinstance))
 	{
 		MessageBox(NULL, "Unable to Init App", "Error", MB_OK);
 		return FALSE;
 	}
 
-	if (!InitInstance(hinstance, nCmdShow))
+	if (!InitInstance1(hinstance, nCmdShow))
 	{
 		MessageBox(NULL, "Unable to Init Instance", "Error", MB_OK);
 		return FALSE;
@@ -45,7 +45,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prevHinstance, LPSTR lpCmdLine
 	return msg.wParam;
 }
 
-BOOL InitApplication(HINSTANCE hinstance)
+BOOL InitWnd1(HINSTANCE hinstance)
 {
 	WNDCLASSEX wndclass;
 	wndclass.cbSize = sizeof(wndclass);
@@ -141,7 +141,7 @@ bool HandleTimer(HWND& hwnd, HDC& hdc, int x, int y, Circle& circle, bool isDire
 	return isDirect;
 }
 
-BOOL InitInstance(HINSTANCE hinstance, int nCmdShow)
+BOOL InitInstance1(HINSTANCE hinstance, int nCmdShow)
 {
 	HWND hwnd;
 	hwnd = CreateWindow(
