@@ -27,8 +27,8 @@ BOOL InitApplication(HINSTANCE hinstance);
 BOOL InitInstance(HINSTANCE hinstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 void ReadFromFile(vector<Participant>& p);
-void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x, int y);
-
+void DrawDiagram1(HDC& hdc, vector<Participant>& p,int x0, int x, int y);
+void DrawScale(HDC& hdc, int x, int y);
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prevHinstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	MSG msg;
@@ -95,7 +95,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
-		DrawDiagram1(hdc, people, x, y);
+		DrawDiagram1(hdc, people,0.05*x, x, y);
+		DrawScale(hdc, x*0.05, y);
 		EndPaint(hwnd, &ps);
 		break;
 	case WM_CLOSE:
@@ -153,9 +154,9 @@ void ReadFromFile(vector<Participant>& p)
 	copy(istream_iterator<Participant>(in), istream_iterator<Participant>(), back_inserter(p));
 	in.close();
 }
-void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x, int y)
+void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x0, int x, int y)
 {
-	int columnWidth = x / p.size();
+	int columnWidth = (x - x0) / p.size();
 	vector<int> height;
 
 	vector<Participant>::iterator max = max_element(p.begin(), p.end(), [](Participant p1, Participant p2) {return p1.value < p2.value; });
@@ -171,8 +172,8 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x, int y)
 	{
 		RECT column, text;
 
-		column.left = i*columnWidth; column.top = y - height[i];
-		column.right = (i + 1)*columnWidth; column.bottom = y;
+		column.left = x0 + i*columnWidth; column.top = y - height[i];
+		column.right = x0 + (i + 1)*columnWidth; column.bottom = y;
 		Participant pt = p[i];
 		HBRUSH brush, old; brush = CreateSolidBrush(RGB(rand() % 255, rand() % 255, rand() % 255));
 		old = (HBRUSH)SelectObject(hdc, brush);
@@ -181,8 +182,27 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x, int y)
 		SelectObject(hdc, brush);
 		DeleteObject(brush);
 
-		text.left = i*columnWidth; text.top = 0;
-		text.right = (i + 1)*columnWidth; text.bottom = y - height[i];
-		DrawText(hdc, pt.surname.data(), pt.surname.size(), &text, DT_SINGLELINE | DT_BOTTOM | DT_CENTER);
+		text.left = x0 + i*columnWidth; text.top = 0;
+		text.right = x0 + (i + 1)*columnWidth; text.bottom = y - height[i];
+		DrawText(hdc, pt.surname.data(), pt.surname.size(), &text, DT_SINGLELINE | DT_BOTTOM | DT_CENTER); // FIX 100% TEXT DIPLAYING!
 	}
+}
+
+void DrawScale(HDC& hdc, int x, int y)
+{
+	HPEN pen, old; pen = CreatePen(PS_SOLID, 2, BLACK_PEN);
+	old = (HPEN)SelectObject(hdc, pen);
+
+	MoveToEx(hdc, x, 0, NULL);
+	LineTo(hdc, x, y);
+
+	int yScale = y / 10;
+	for (int i = y; i >= 0; i -= yScale)
+	{
+		MoveToEx(hdc, x, i, NULL);
+		LineTo(hdc, x - x*0.1, i);
+	}
+
+	SelectObject(hdc, old);
+	DeleteObject(pen);
 }

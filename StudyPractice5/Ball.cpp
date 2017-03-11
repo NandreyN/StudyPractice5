@@ -19,7 +19,7 @@ BOOL InitInstance(HINSTANCE hinstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 void DeleteCircle(HDC& hdc, Circle& circle);
 void DrawCircle(HDC& hdc, Circle& circle);
-bool HandleTimer(HWND& hwnd ,HDC& hdc, int x, int y, Circle& circle, bool isDirect);
+bool HandleTimer(HWND& hwnd, HDC& hdc, int x, int y, Circle& circle, bool isDirect, int speed);
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prevHinstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -92,8 +92,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		switch (wparam)
 		{
 		case BALL_TIMER:
-			isDirect = HandleTimer(hwnd, hdc, x, y, circle, isDirect);
-			
+			isDirect = HandleTimer(hwnd, hdc, x, y, circle, isDirect, 5);
+			ValidateRect(hwnd, NULL);
 			break;
 		default:return FALSE;
 		}
@@ -125,7 +125,7 @@ void DrawCircle(HDC& hdc, Circle& circle)
 	Ellipse(hdc, x - r, y - r, x + r, y + r);
 }
 
-bool HandleTimer(HWND& hwnd, HDC& hdc, int x, int y, Circle& circle, bool isDirect)
+bool HandleTimer(HWND& hwnd, HDC& hdc, int x, int y, Circle& circle, bool isDirect, int speed)
 {
 	DeleteCircle(hdc, circle);
 	/*int x0; x0 = circle.center.x;
@@ -136,13 +136,13 @@ bool HandleTimer(HWND& hwnd, HDC& hdc, int x, int y, Circle& circle, bool isDire
 
 	int perX = x / 6.28, perY = y / 2; // цена деления в пикселях
 
-	circle.center.x += (isDirect) ? 10 : -10;
+	circle.center.x += (isDirect) ? speed : -speed;
 
 	double val = sin((double)circle.center.x / perX)  * perY;
 	circle.center.y = y / 2 + val;
 	DrawCircle(hdc, circle);
 
-	if ((x - 5 <= circle.center.x && circle.center.x <= x + 5) || (circle.center.x >= -5 && circle.center.x <= 5))
+	if ((x - speed / 2 <= circle.center.x && circle.center.x <= x + speed / 2) || (circle.center.x >= -speed / 2 && circle.center.x <= speed / 2))
 		return !isDirect;
 	return isDirect;
 }
