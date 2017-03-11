@@ -10,6 +10,7 @@
 #include <iterator>
 #include <algorithm>
 #include <ctime>
+#include <numeric>
 
 using namespace std;
 
@@ -156,8 +157,12 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x, int y)
 {
 	int columnWidth = x / p.size();
 	vector<int> height;
-	for_each(p.begin(), p.end(), [&p, y, &height](Participant& p)
+
+	vector<Participant>::iterator max = max_element(p.begin(), p.end(), [](Participant p1, Participant p2) {return p1.value < p2.value; });
+
+	for_each(p.begin(), p.end(), [&p, y, &height, &max](Participant& p)
 	{
+		//height.push_back((double) p.value/ (*max).value * y);
 		height.push_back((double)p.value / 100 * y);
 	});
 
@@ -166,15 +171,18 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x, int y)
 	{
 		RECT column, text;
 
-		column.left = i*columnWidth; column.top = height[i];
+		column.left = i*columnWidth; column.top = y - height[i];
 		column.right = (i + 1)*columnWidth; column.bottom = y;
 		Participant pt = p[i];
-		//FillRect(hdc, &column, CreateSolidBrush(RGB(50,50,50,)));
 		HBRUSH brush, old; brush = CreateSolidBrush(RGB(rand() % 255, rand() % 255, rand() % 255));
 		old = (HBRUSH)SelectObject(hdc, brush);
 
 		Rectangle(hdc, column.left, column.top, column.right, column.bottom);
 		SelectObject(hdc, brush);
 		DeleteObject(brush);
+
+		text.left = i*columnWidth; text.top = 0;
+		text.right = (i + 1)*columnWidth; text.bottom = y - height[i];
+		DrawText(hdc, pt.surname.data(), pt.surname.size(), &text, DT_SINGLELINE | DT_BOTTOM | DT_CENTER);
 	}
 }
