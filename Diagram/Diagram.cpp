@@ -186,7 +186,8 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x0, int x, int y)
 
 		text.left = x0 + i*columnWidth; text.top = 0;
 		text.right = x0 + (i + 1)*columnWidth; text.bottom = y - height[i];
-		DrawText(hdc, pt.surname.data(), pt.surname.size(), &text, DT_SINGLELINE | DT_BOTTOM | DT_CENTER); // FIX 100% TEXT DIPLAYING!
+		string out = pt.surname + " " + to_string(pt.value) + "%";
+		DrawText(hdc, out.data(), out.size(), &text, DT_SINGLELINE | DT_BOTTOM | DT_CENTER); // FIX 100% TEXT DIPLAYING!
 	}
 }
 

@@ -27,8 +27,9 @@ BOOL InitApplication(HINSTANCE hinstance);
 BOOL InitInstance(HINSTANCE hinstance, int nCmdShow);
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 void ReadFromFile(vector<Participant>& p);
-void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x0, int x, int y);
-void DrawScale(HDC& hdc, int x, int y);
+void DrawChart(HDC& hdc, vector<Participant>& p, int x, int y);
+
+
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE prevHinstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	MSG msg;
@@ -86,7 +87,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 	switch (message)
 	{
 	case WM_CREATE:
-		//hdc = GetDC(hwnd);
 		ReadFromFile(people);
 		break;
 	case WM_SIZE:
@@ -95,7 +95,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
-		
+		SetBkMode(hdc, TRANSPARENT);
+		DrawChart(hdc, people, x, y);
+		SetBkMode(hdc, NULL);
 		EndPaint(hwnd, &ps);
 		break;
 	case WM_CLOSE:
@@ -154,4 +156,73 @@ void ReadFromFile(vector<Participant>& p)
 	in.close();
 }
 
+void DrawChart(HDC& hdc, vector<Participant>& p, int x, int y)
+{
+	SetMapMode(hdc, MM_ANISOTROPIC);
+	SetWindowExtEx(hdc, x, y, NULL);
+	SetViewportExtEx(hdc, x, -y, NULL);
+	SetViewportOrgEx(hdc, x / 2, y / 2, NULL);
 
+	int R = (x <= y) ? x / 2 : y / 2;
+
+	int lastX = R, lastY = 0;
+	double prevAngle = 0.0;
+
+	for_each(p.begin(), p.end(), [&lastX, &lastY, &hdc, &R, &prevAngle](Participant par)
+	{
+		HBRUSH brush, oldBrush;
+		brush = CreateSolidBrush(RGB(rand() % 255, rand() % 255, rand() % 255));
+		oldBrush = (HBRUSH)SelectObject(hdc, brush);
+
+		double angle = 6.28 / (100.0f / par.value) + prevAngle;
+		int newX = R*cos(angle), newY = R*sin(angle);
+		Pie(hdc, -R, R, R, -R, lastX, lastY, newX, newY);
+
+		double midAngle = 6.28 / (100.0f / par.value * 2) + prevAngle;
+		double threeAngle = 6.28 / (100.0f / par.value * 3) + prevAngle;
+		int middleX = R*cos(midAngle), middleY = R*sin(midAngle);
+
+		// Text
+		int LTX = (R / 5)*cos(angle), LTY = (R / 5)*sin(angle);
+		int RBX = (R * 0.9)*cos(threeAngle), RBY = (R * 0.9)*sin(threeAngle);
+		int LBX = (R / 5)*cos(prevAngle), LBY = (R / 5)*sin(prevAngle);
+		//threeAngle = 6.28 / (100.0f / par.value * 1.5) + prevAngle;
+		int RTX = (R * 0.9)*cos(threeAngle), RTY = (R * 0.9)*sin(threeAngle);
+		/*POINT p1, p2, p3, p4; p1.x = LTX; p1.y = LTY;
+		p2.x = RBX; p2.y = RBY;
+		p3.x = LBX; p3.y = LBY;
+		p4.x = RTX; p4.y = RTY;*/
+
+		/*Ellipse(hdc, middleX - 5, middleY + 5, middleX + 5, middleY - 5);
+		Ellipse(hdc, LTX - 5, LTY + 5, LTX + 5, LTY - 5);
+		Ellipse(hdc, RBX - 5, RBY + 5, RBX + 5, RBY - 5);
+		Ellipse(hdc, LBX - 2, LBY + 2, LBX + 2, LBY - 2);
+		Ellipse(hdc, RTX - 5, RTY + 5, RTX + 5, RTY - 5);*/
+		/*POINT ar[] = { p1,p4,p2,p3 };
+		Polygon(hdc,ar , 4);*/
+		int x0, y0; x0 = (R / 4)*cos(threeAngle); y0 = (R/4)*sin(threeAngle);
+		LOGFONT lf; 
+		lf.lfEscapement = -(double)threeAngle / 3.14 * 1800;
+		lf.lfCharSet = DEFAULT_CHARSET;
+		lf.lfPitchAndFamily = DEFAULT_PITCH;
+		strcpy(lf.lfFaceName, "Arial");
+		lf.lfHeight = 30;
+		lf.lfWidth = lf.lfHeight *0.4;
+		lf.lfItalic = FALSE;
+		lf.lfUnderline = FALSE;
+		lf.lfStrikeOut = FALSE;
+		SelectObject(hdc, CreateFontIndirect(&lf));
+		
+
+		RECT r;
+		SetRect(&r, LTX, LTY, RBX, RBY);
+		//DrawText(hdc, par.surname.data(), par.surname.size(), &r, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+		TextOut(hdc, x0, y0, par.surname.data(), par.surname.size());
+
+		lastX = newX; lastY = newY;
+		prevAngle = angle;
+
+		SelectObject(hdc, oldBrush);
+		DeleteObject(brush);
+	});
+}
