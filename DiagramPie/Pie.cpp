@@ -179,45 +179,24 @@ void DrawChart(HDC& hdc, vector<Participant>& p, int x, int y)
 		Pie(hdc, -R, R, R, -R, lastX, lastY, newX, newY);
 
 		double midAngle = 6.28 / (100.0f / par.value * 2) + prevAngle;
-		double threeAngle = 6.28 / (100.0f / par.value * 3) + prevAngle;
-		int middleX = R*cos(midAngle), middleY = R*sin(midAngle);
 
-		// Text
-		int LTX = (R / 5)*cos(angle), LTY = (R / 5)*sin(angle);
-		int RBX = (R * 0.9)*cos(threeAngle), RBY = (R * 0.9)*sin(threeAngle);
-		int LBX = (R / 5)*cos(prevAngle), LBY = (R / 5)*sin(prevAngle);
-		//threeAngle = 6.28 / (100.0f / par.value * 1.5) + prevAngle;
-		int RTX = (R * 0.9)*cos(threeAngle), RTY = (R * 0.9)*sin(threeAngle);
-		/*POINT p1, p2, p3, p4; p1.x = LTX; p1.y = LTY;
-		p2.x = RBX; p2.y = RBY;
-		p3.x = LBX; p3.y = LBY;
-		p4.x = RTX; p4.y = RTY;*/
+		int x0, y0; x0 = (R / 3)*cos(angle); y0 = (R / 3)*sin(angle);
+		string txt = par.surname + " " + to_string(par.value) + "%";
 
-		/*Ellipse(hdc, middleX - 5, middleY + 5, middleX + 5, middleY - 5);
-		Ellipse(hdc, LTX - 5, LTY + 5, LTX + 5, LTY - 5);
-		Ellipse(hdc, RBX - 5, RBY + 5, RBX + 5, RBY - 5);
-		Ellipse(hdc, LBX - 2, LBY + 2, LBX + 2, LBY - 2);
-		Ellipse(hdc, RTX - 5, RTY + 5, RTX + 5, RTY - 5);*/
-		/*POINT ar[] = { p1,p4,p2,p3 };
-		Polygon(hdc,ar , 4);*/
-		int x0, y0; x0 = (R / 4)*cos(threeAngle); y0 = (R/4)*sin(threeAngle);
-		LOGFONT lf; 
-		lf.lfEscapement = -(double)threeAngle / 3.14 * 1800;
+		LOGFONT lf;
+		int abs = (double)midAngle / 3.14 * 1800;
+		lf.lfEscapement = -abs;
 		lf.lfCharSet = DEFAULT_CHARSET;
 		lf.lfPitchAndFamily = DEFAULT_PITCH;
 		strcpy(lf.lfFaceName, "Arial");
-		lf.lfHeight = 30;
-		lf.lfWidth = lf.lfHeight *0.4;
+		lf.lfWidth = R / 2 / txt.size();
+		lf.lfHeight = lf.lfWidth * 1.5;
 		lf.lfItalic = FALSE;
 		lf.lfUnderline = FALSE;
 		lf.lfStrikeOut = FALSE;
 		SelectObject(hdc, CreateFontIndirect(&lf));
-		
 
-		RECT r;
-		SetRect(&r, LTX, LTY, RBX, RBY);
-		//DrawText(hdc, par.surname.data(), par.surname.size(), &r, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
-		TextOut(hdc, x0, y0, par.surname.data(), par.surname.size());
+		TextOut(hdc, x0, y0, txt.data(), txt.size());
 
 		lastX = newX; lastY = newY;
 		prevAngle = angle;
