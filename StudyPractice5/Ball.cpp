@@ -1,8 +1,6 @@
 #undef UNICODE
 #include <windows.h>
 #include  <math.h>
-#include <cmath>
-#include <string>
 #define BALL_TIMER 0
 
 using namespace std;
@@ -73,7 +71,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 	static int x, y;
 	static HDC hdc;
 	static Circle circle;
-	static bool isDirect;
+	static bool isDirect, moves;
 
 	switch (message)
 	{
@@ -83,6 +81,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		circle.center.x = circle.center.y = 0;
 		circle.R = 10;
 		isDirect = true;
+		moves = true;
 		break;
 	case WM_SIZE:
 		x = LOWORD(lparam);
@@ -92,6 +91,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		switch (wparam)
 		{
 		case BALL_TIMER:
+			if (!moves) return FALSE;
 			isDirect = HandleTimer(hwnd, hdc, x, y, circle, isDirect, 7);
 			ValidateRect(hwnd, NULL);
 			break;
@@ -105,6 +105,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
+		break;
+	case WM_RBUTTONUP:
+		moves = !moves;
 		break;
 	default:
 		return DefWindowProc(hwnd, message, wparam, lparam);

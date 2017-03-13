@@ -174,6 +174,7 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x0, int x, int y)
 
 		column.left = x0 + i*columnWidth; column.top = y - height[i];
 		column.right = x0 + (i + 1)*columnWidth; column.bottom = y;
+
 		Participant pt = p[i];
 		HBRUSH brush, old; brush = CreateSolidBrush(RGB(rand() % 255, rand() % 255, rand() % 255));
 		old = (HBRUSH)SelectObject(hdc, brush);
@@ -184,10 +185,30 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x0, int x, int y)
 		SelectObject(hdc, brush);
 		DeleteObject(brush);
 
-		text.left = x0 + i*columnWidth; text.top = 0;
-		text.right = x0 + (i + 1)*columnWidth; text.bottom = y - height[i];
+		/*text.left = x0 + i*columnWidth; text.top = 0;
+		text.right = x0 + (i + 1)*columnWidth; text.bottom = y - height[i];*/
+		SetRect(&text, x0 + i*columnWidth, y, x0 + (i + 1)*columnWidth, 0);
 		string out = pt.surname + " " + to_string(pt.value) + "%";
-		DrawText(hdc, out.data(), out.size(), &text, DT_SINGLELINE | DT_BOTTOM | DT_CENTER); // FIX 100% TEXT DIPLAYING!
+
+		LOGFONT turnedTextLF;
+		int txtH = abs(column.top - column.bottom) / out.size();
+
+		turnedTextLF.lfCharSet = DEFAULT_CHARSET;
+		turnedTextLF.lfPitchAndFamily = DEFAULT_PITCH;
+		strcpy(turnedTextLF.lfFaceName, "Arial");
+		turnedTextLF.lfHeight = (txtH < columnWidth) ?txtH :columnWidth;
+		turnedTextLF.lfWidth = turnedTextLF.lfHeight /2;
+		turnedTextLF.lfEscapement = 900;
+		turnedTextLF.lfItalic = FALSE;
+		turnedTextLF.lfUnderline = FALSE;
+		turnedTextLF.lfStrikeOut = FALSE;
+		SetBkMode(hdc, TRANSPARENT);
+
+		HFONT hTurnedText = CreateFontIndirect(&turnedTextLF);
+		HFONT oldFont = (HFONT)SelectObject(hdc, hTurnedText);
+		DrawText(hdc, out.data(), out.size(), &text, DT_SINGLELINE | DT_VCENTER  | DT_BOTTOM); // FIX 100% TEXT DIPLAYING!
+		SelectObject(hdc, oldFont);
+		DeleteObject(hTurnedText);
 	}
 }
 

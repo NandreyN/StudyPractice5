@@ -168,13 +168,17 @@ void DrawChart(HDC& hdc, vector<Participant>& p, int x, int y)
 	int lastX = R, lastY = 0;
 	double prevAngle = 0.0;
 
-	for_each(p.begin(), p.end(), [&lastX, &lastY, &hdc, &R, &prevAngle](Participant par)
+	double sum = 0.0;
+	for (int i = 0; i < p.size(); i++)
+		sum += p[i].value;
+
+	for_each(p.begin(), p.end(), [&lastX, &lastY, &hdc, &R, &prevAngle, &sum](Participant par)
 	{
 		HBRUSH brush, oldBrush;
 		brush = CreateSolidBrush(RGB(rand() % 255, rand() % 255, rand() % 255));
 		oldBrush = (HBRUSH)SelectObject(hdc, brush);
 
-		double angle = 6.28 / (100.0f / par.value) + prevAngle;
+		double angle = 6.28 / (sum / par.value) + prevAngle;
 		int newX = R*cos(angle), newY = R*sin(angle);
 		Pie(hdc, -R, R, R, -R, lastX, lastY, newX, newY);
 
