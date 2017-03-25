@@ -8,11 +8,18 @@
 #define ID_HELP 40007
 #define ID_SETTINGS_DRAWTEXT 40008
 #define ID_SETTINGS_AUTOSAVE 40009
+#define ID_SETTING_SETCOLOR 40011
 #define IDD_DIALOG1 103
 #define IDD_ADDDIALOG 105
+#define IDD_COLOR 107
 #define SAVETIMER 0
 #define IDAPPLY 1004
+#define IDAPPLYCOLOR 1005
+#define IDCHOOSECOLOR 1007
+#define IDCOLUMN 1009
+#define IDCOLORCANCEL 1006
 #define ENLARGECOLLECTION (WM_USER + 1)
+#define APPLYCOLORS (WM_USER + 2)
 
 #include <windows.h>
 #include  <math.h>
@@ -26,14 +33,18 @@
 #include <algorithm>
 #include <ctime>
 #include <numeric>
+#include <map>
 
 using namespace std;
+static map<int, COLORREF> collection;
+static COLORREF lastColor;
 
 struct Participant
 {
-	Participant() { value = -1; };
+	Participant() { value = -1;  color = 0; };
 	string surname;
 	int value;
+	COLORREF color;
 };
 istream& operator >> (istream& i, Participant& p);
 ostream& operator << (ostream& o, Participant& p);
@@ -119,6 +130,51 @@ BOOL CALLBACK ExitHandler(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	return FALSE;
 }
 
+BOOL CALLBACK ColorHandler(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	static CHOOSECOLOR ccs;
+	static COLORREF acrCustClr[16];
+	static COLORREF color;
+
+	switch (msg)
+	{
+	case WM_INITDIALOG:
+		ccs.lStructSize = sizeof(CHOOSECOLOR);
+		ccs.hwndOwner = hwnd;
+		ccs.rgbResult = RGB(255,255,255);
+		ccs.Flags = CC_RGBINIT | CC_FULLOPEN;
+		ccs.lpCustColors = (LPDWORD)acrCustClr;
+		break;
+
+	case WM_COMMAND:
+	{
+		switch (LOWORD(wparam))
+		{
+		case IDAPPLYCOLOR:
+			SendMessage(GetParent(hwnd), APPLYCOLORS, NULL,NULL);
+			EndDialog(hwnd,0);
+			return TRUE;
+		case IDCOLORCANCEL:
+			EndDialog(hwnd, wparam);
+			return TRUE;
+		case IDCHOOSECOLOR:
+			if (ChooseColor(&ccs))
+			{
+				char buff[4];
+				SendDlgItemMessage(hwnd, IDCOLUMN, WM_GETTEXT, 4, (LPARAM)buff);
+				//MessageBox(NULL, "", buff, 4);
+				collection[atoi(buff)] = ccs.rgbResult;
+				lastColor = ccs.rgbResult;
+				;
+			}
+			break;
+		}
+		break;
+	}
+	}
+	return FALSE;
+}
+
 BOOL CALLBACK AddHandler(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	static int cellHeight, cellNameWidth, cellValueWidth, count;
@@ -132,6 +188,10 @@ BOOL CALLBACK AddHandler(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		count = 4; // Number of 
 		
 		HDC hdc; hdc = NULL;
+
+		RECT rect;
+		GetClientRect(hwnd, &rect);
+		x = rect.right;
 
 		// Get text metrics to set Edit Box height 
 		TEXTMETRIC metric;
@@ -177,6 +237,7 @@ BOOL CALLBACK AddHandler(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 					Participant p;
 					p.surname = string(name);
 					p.value = a;
+					p.color = RGB(255,255,255);
 					toShare.push_back(p);
 				}
 			}
@@ -208,11 +269,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 	switch (message)
 	{
 	case WM_CREATE:
+		lastColor = WHITE_BRUSH;
 		ReadFromFile(people);
 		menu = GetMenu(hwnd); // Loading menu, assigned in res 
 		DWORD word; word = GetMenuState(menu, ID_SETTINGS_DRAWTEXT, MF_BYCOMMAND);
 		drawText = (word & MF_CHECKED) ? true : false;
-
+		
 		break;
 	case WM_COMMAND:
 		/*Here is a section for 
@@ -240,7 +302,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		case ID_FILE_EXIT:
 			DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_DIALOG1), hwnd, ExitHandler);
 			break;
-
+		case ID_SETTING_SETCOLOR:
+			DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_COLOR), hwnd,ColorHandler);
+			break;
 		case ID_SETTINGS_DRAWTEXT:
 		{
 			DWORD state = GetMenuState(menu, ID_SETTINGS_DRAWTEXT, MF_BYCOMMAND);
@@ -273,6 +337,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 	case WM_SIZE:
 		x = LOWORD(lparam);
 		y = HIWORD(lparam);
+		break;
+	case APPLYCOLORS:
+		for_each(collection.begin(), collection.end(), [](pair<int,COLORREF> pair)
+		{
+			if (pair.first < people.size())
+			{
+				people[pair.first].color = pair.second;
+			}
+		});
+		InvalidateRect(hwnd, NULL, true);
 		break;
 	case ENLARGECOLLECTION:
 		Participant *par;
@@ -364,13 +438,13 @@ istream& operator >> (istream& i, Participant& p)
 	istringstream iss(a);
 	iss >> a; p.surname = a;
 	iss >> a; p.value = atoi(a.data());
-
+	iss >> a; p.color = atol(a.data());
 	return i;
 }
 
 ostream& operator << (ostream& o, const Participant& p)
 {
-	o << p.surname << " " << p.value;
+	o << p.surname << " " << p.value << " " << p.color;
 	return o;
 }
 void ReadFromFile(vector<Participant>& p)
@@ -414,7 +488,9 @@ void DrawDiagram1(HDC& hdc, vector<Participant>& p, int x0, int x, int y, bool d
 		column.right = x0 + (i + 1)*columnWidth; column.bottom = y;
 
 		Participant pt = p[i];
-		HBRUSH brush, old; brush = CreateSolidBrush(RGB(rand() % 255, rand() % 255, rand() % 255));
+
+		COLORREF color(pt.color);
+		HBRUSH brush, old; brush = CreateSolidBrush(color);
 		old = (HBRUSH)SelectObject(hdc, brush);
 
 		Rectangle(hdc, column.left, column.top, column.right, column.bottom);
